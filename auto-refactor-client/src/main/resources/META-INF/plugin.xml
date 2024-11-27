@@ -1,0 +1,16 @@
+<idea-plugin>
+    <id>org.varamadon.autorefactor</id>
+    <name>Autorefactor-Client</name>
+    <vendor email="gratedaniel@gmail.com" url="https://github.com/Varamadon/auto-refactor">Varamadon</vendor>
+
+    <description>Performs refactoring based on the action plan provided by the server</description>
+    <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.modules.java</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <appStarter implementation="org.varamadon.autorefactor.client.ClientStarter" id="autorefactor"/>
+        <postStartupActivity
+                implementation="org.varamadon.autorefactor.client.refactoring.activity.RefactoringActivity"/>
+    </extensions>
+
+</idea-plugin>
