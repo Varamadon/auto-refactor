@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.google.common.hash.Hashing
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
@@ -99,7 +101,7 @@ class AgentToolController(
 
     private fun VirtualFile.getContent(): String {
         var document: Document? = null
-        ApplicationManager.getApplication().runReadAction {
+        runReadAction {
             document = FileDocumentManager.getInstance().getDocument(this)
         }
         return document?.text.orEmpty()
@@ -114,7 +116,7 @@ class AgentToolController(
 
     private fun exitIfHeadless() {
         if (ApplicationManager.getApplication().isHeadlessEnvironment) {
-            ApplicationManager.getApplication().invokeLater {
+            invokeLater {
                 ProjectManager.getInstance().closeAndDispose(project)
                 ApplicationManager.getApplication().exit(false, true, false)
             }

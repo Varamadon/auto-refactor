@@ -1,7 +1,7 @@
 package org.varamadon.autorefactor.client.refactoring.activity
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
@@ -43,7 +43,7 @@ class RefactoringActivity : ProjectActivity {
         val executor = RefactoringExecutor()
         val objectMapper = ObjectMapper()
 
-        DumbService.getInstance(project).runWhenSmart{
+        DumbService.getInstance(project).runWhenSmart {
             log.warn("Starting agent tool controller")
             AgentToolController(executor, objectMapper, project, ArrayDeque(files), Properties.toolsPort)
 
@@ -58,7 +58,7 @@ class RefactoringActivity : ProjectActivity {
         val filesToProcess = mutableSetOf<VirtualFile>()
         log.warn("Base dir: ${projectBaseDir.name}")
 
-        ApplicationManager.getApplication().runReadAction {
+        runReadAction {
             VfsUtilCore.visitChildrenRecursively(projectBaseDir, object : VirtualFileVisitor<Any>() {
                 override fun visitFile(file: VirtualFile): Boolean {
                     if (projectFileIndex.isExcluded(file)) {
@@ -71,7 +71,6 @@ class RefactoringActivity : ProjectActivity {
                 }
             })
         }
-        log.warn("Files to process: ${filesToProcess.toList()}")
         return filesToProcess
     }
 

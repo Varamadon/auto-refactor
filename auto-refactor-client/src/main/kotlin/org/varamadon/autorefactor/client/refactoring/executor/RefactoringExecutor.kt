@@ -1,7 +1,9 @@
 package org.varamadon.autorefactor.client.refactoring.executor
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.command.WriteCommandAction.runWriteCommandAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -30,14 +32,14 @@ class RefactoringExecutor {
      */
     fun execute(virtualFile: VirtualFile, project: Project, actionItem: ActionItem) {
         log.warn("Executing action plan item: $actionItem in file ${virtualFile.name}")
-        val psiFile = ApplicationManager.getApplication().runReadAction<PsiFile> {
-            PsiManager.getInstance(project).findFile(virtualFile)
+        val psiFile = runReadAction {
+            val file = PsiManager.getInstance(project).findFile(virtualFile)
+            checkNotNull(file)
         }
-        checkNotNull(psiFile)
-        val document = ApplicationManager.getApplication().runReadAction<Document> {
-            PsiDocumentManager.getInstance(project).getDocument(psiFile)
+        val document = runReadAction {
+            val document = PsiDocumentManager.getInstance(project).getDocument(psiFile)
+            checkNotNull(document)
         }
-        checkNotNull(document)
         var actionExecuted = false
         @Suppress("WHEN_ENUM_CAN_BE_NULL_IN_JAVA")
         when (actionItem.getType()) {
@@ -53,7 +55,7 @@ class RefactoringExecutor {
                 executeRenameMethod(actionItem, psiFile, project) { actionExecuted = true }
             }
         }
-        WriteCommandAction.runWriteCommandAction(project) {
+        runWriteCommandAction(project) {
             FileDocumentManager.getInstance().saveAllDocuments()
             PsiDocumentManager.getInstance(project).commitDocument(document)
         }
@@ -69,7 +71,7 @@ class RefactoringExecutor {
         registerActionExecuted: () -> Unit
     ) {
         val addCommentAction: AddCommentAction = actionItem as AddCommentAction
-        WriteCommandAction.runWriteCommandAction(
+        runWriteCommandAction(
             project
         ) {
             document.insertString(
@@ -125,16 +127,14 @@ class RefactoringExecutor {
         project: Project,
         registerActionExecuted: () -> Unit
     ) {
-        var psiVariable: PsiNamedElement? = null
-        ApplicationManager.getApplication().runReadAction {
-            psiVariable =
-                getPsiElementOnLineByTypeAndName(
-                    psiFile!!,
-                    lineNumber,
-                    elementType,
-                    oldName,
-                    project
-                )
+        val psiVariable: PsiNamedElement? = runReadAction {
+            getPsiElementOnLineByTypeAndName(
+                psiFile!!,
+                lineNumber,
+                elementType,
+                oldName,
+                project
+            )
         }
         psiVariable?.let {
             executeRenameElement(
@@ -154,7 +154,7 @@ class RefactoringExecutor {
     ) {
         // This produces exceptions because RenameProcessor says it should not be started in a write action,
         // but when started outside of one, it fails with an exception.
-        ApplicationManager.getApplication().runWriteAction {
+        runWriteCommandAction(project) {
             RenameProcessor(project, element, newName, false, false).run()
             registerActionExecuted()
         }

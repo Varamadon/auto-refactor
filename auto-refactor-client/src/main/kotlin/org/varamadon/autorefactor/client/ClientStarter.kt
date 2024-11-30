@@ -18,7 +18,7 @@ import java.util.*
  * If the client is run as a full plugin this class will not get called.
  */
 class ClientStarter : ApplicationStarter {
-    private val log: Logger = Logger.getInstance(ClientStarter::class.java)
+    private val log = Logger.getInstance(javaClass)
 
     override val isHeadless: Boolean
         get() = true
