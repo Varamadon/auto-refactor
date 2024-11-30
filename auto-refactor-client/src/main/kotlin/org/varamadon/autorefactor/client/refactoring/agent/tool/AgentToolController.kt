@@ -46,17 +46,17 @@ class AgentToolController(
                  * If there are no more files left in the queue, an empty response will be returned.
                  */
                 get("/files/next") {
-                    if (fileQueue.isEmpty()) {
+                    val file = fileQueue.removeFirstOrNull()
+                    if (file == null) {
                         call.respondText("", ContentType.Text.Plain)
-                    } else {
-                        val file = fileQueue.removeFirst()
-                        val fileContent = file.getContent()
-                        val hash = Hashing.sha256()
-                            .hashString(fileContent, StandardCharsets.UTF_8).toString()
-                        filesByHash[hash] = file
-
-                        call.respondText(fileContent, ContentType.Text.Plain)
+                        return@get
                     }
+                    val fileContent = file.getContent()
+                    val hash = Hashing.sha256()
+                        .hashString(fileContent, StandardCharsets.UTF_8).toString()
+                    filesByHash[hash] = file
+
+                    call.respondText(fileContent, ContentType.Text.Plain)
                 }
 
                 /**
